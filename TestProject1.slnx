@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LibDQB/LibDQB.csproj" />
+  <Project Path="LibDQBTests/LibDQBTests.csproj" />
+</Solution>
