@@ -25,20 +25,22 @@ namespace LibDQB.B2
         readonly static byte[] ScreenshotDataMagicNumber = { 0x61, 0x65, 0x72, 0x43, 0x10 };
 
         //===================================== Functions =====================================//
-        public static Task<RawCommonData> LoadCommonDataAsync(FileInfo file) => LoadCommonDataAsync(file, new FileDataReadOptions());
-
-        public static async Task<RawCommonData> LoadCommonDataAsync(FileInfo file, FileDataReadOptions options)
-        {
-            using var readStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, options.FileShare);
-            return await LoadAsync(readStream, options, 0);
-        }
+        public static Task<FileData> LoadCommonDataAsync(FileInfo file) => LoadAsync(file, new FileDataReadOptions(),0);
+        public static Task<FileData> LoadStageDataAsync(FileInfo file) => LoadAsync(file, new FileDataReadOptions(),1);
+        public static Task<FileData> LoadScreenshotDataAsync(FileInfo file) => LoadAsync(file, new FileDataReadOptions(),2);
 
         /* S> I am using a "type" argument to distinguish the files. They all load with the same LoadAsync
-        If you think itwould be cleaner to somehow have FileDataReadOptions contain the differenciator I'm down
+        If you think it would be cleaner to somehow have FileDataReadOptions contain the differenciator I'm down
         I'm also down for a record that holds the relevant options
         I just want to keep the redundancy in fucntions to a minimum. Don't write the same thing twice. Does not end well usually. 
         */
-        public static async Task<RawCommonData> LoadAsync(Stream readStream, FileDataReadOptions options, byte type)
+        public static async Task<FileData> LoadAsync(FileInfo file, FileDataReadOptions options, byte type)
+        {
+            using var readStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, options.FileShare);
+            return await LoadAsync(readStream, options, type);
+        }
+
+        public static async Task<FileData> LoadAsync(Stream readStream, FileDataReadOptions options, byte type)
         {
             var header = new byte[type switch{0 => CommonDataHeader, 1 => StageDataHeader, _ => ScreenshotDataHeader}];
 
@@ -56,8 +58,8 @@ namespace LibDQB.B2
             return type switch
             {
                 0 => new RawCommonData(header, body),
-                1 => throw new NotImplementedException("Stgdat class not implemented yet."),
-                _ => throw new NotImplementedException("Screenshot class not implemented yet."),
+                1 => new RawStageData(header, body),
+                _ => new RawScreenshotData(header, body),
             };    
         }
 
