@@ -41,7 +41,7 @@ public class RawCmndatTests
 	public async Task TestCmndat01()
 	{
 		var file = FindTestFile("game-saves", "01", "CMNDAT.BIN");
-		var cmndat = await RawCmndat.LoadAsync(file);
+		var cmndat = await FileFactory.LoadAsync(file);
 
 		// Buildertopia Gamma (16), not sailing
 		Assert.AreEqual(16, cmndat.ToIslandId.Value);
