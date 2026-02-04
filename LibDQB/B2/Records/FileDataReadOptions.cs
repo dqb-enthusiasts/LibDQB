@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LibDQB.B2;
+namespace LibDQB.B2.Records;
 
-public sealed record CmndatReadOptions
+public sealed record FileDataReadOptions
 {
 	public FileShare FileShare { get; init; } = FileShare.None;
 }
