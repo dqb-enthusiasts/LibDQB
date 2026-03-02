@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LibDQB.B2;
+namespace LibDQB.B2.Records;
 
 public readonly record struct IslandId
 {
@@ -12,7 +12,7 @@ public readonly record struct IslandId
 
 	public IslandId(byte value)
 	{
-		this.Value = value;
+		Value = value;
 	}
 
 	// TODO - add constants for known values

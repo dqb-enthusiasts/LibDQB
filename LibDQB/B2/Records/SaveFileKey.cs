@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LibDQB.B2;
+namespace LibDQB.B2.Records;
 
 /// <summary>
 /// Each STGDAT file has a key that must match the key in its CMNDAT file.
@@ -19,6 +19,6 @@ public readonly record struct SaveFileKey
 
 	public SaveFileKey(uint value)
 	{
-		this.Value = value;
+		Value = value;
 	}
 }
