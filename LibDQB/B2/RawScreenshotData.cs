@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace LibDQB.B2
 {
-    internal class RawScreenshotData : FileData
+    /// <summary>
+    /// Provides direct, low-level access to a SCDHDAT file.
+    /// </summary>
+    internal sealed class RawScreenshotData
     {
-        /// <summary>
-        /// Provides direct, low-level access to a SCDHDAT file.
-        /// </summary>
-
-        protected override uint headerLength { get { return FileFactory.ScreenshotDataHeader; } }
-        protected override uint decompressedBodyLength { get { return (uint)_body.Length; } }
+        private readonly Memory<byte> header;
+        private readonly Memory<byte> body;
 
         internal RawScreenshotData(Memory<byte> header, Memory<byte> body)
-            : base(header, body)
         {
+            this.header = header;
+            this.body = body;
         }
     }
 }
