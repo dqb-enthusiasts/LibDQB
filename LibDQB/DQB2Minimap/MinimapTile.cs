@@ -152,21 +152,21 @@ public readonly record struct MinimapTile
     /// <remarks>
     /// See also <see cref="IsQuirky"/>.
     /// </remarks>
-    public int? QuirkyOverlay
+    public OverlayId? QuirkyOverlay
     {
         get
         {
             // Add 1 to skip the "unTile"
-            const int Base = QuirkyBit + 1;
+            const int Offset = QuirkyBit + 1;
 
             return (TileValue & 0x7FFF) switch
             {
-                // Base + 11*BaseTileId => OverlayId
-                Base + 11 * 8 => 8,
-                Base + 11 * 9 => 10,
-                Base + 11 * 10 => 9,
-                Base + 11 * 11 => 7,
-                Base + 11 * 18 => 8,
+                // Offset + 11*BaseTileId => OverlayId
+                Offset + 11 * 8 => new(8),
+                Offset + 11 * 9 => new(10),
+                Offset + 11 * 10 => new(9),
+                Offset + 11 * 11 => new(7),
+                Offset + 11 * 18 => new(8),
                 _ => null,
             };
         }
