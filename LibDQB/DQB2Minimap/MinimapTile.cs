@@ -37,8 +37,6 @@ public readonly record struct MinimapTile
     const int VisibleBit = 0x8000;
     const int QuirkyBit = 0x4000;
 
-    public static BaseTileId MaxLegalBaseTileId => new(790);
-
     public required int TileValue { get; init; }
 
     public BaseTileId BaseTileId => new(this);
@@ -178,7 +176,7 @@ public readonly record struct MinimapTile
 
     private static IReadOnlyList<SeaTypeIndex> BuildSeaTypeLookup()
     {
-        var array = new SeaTypeIndex[MaxLegalBaseTileId + 1];
+        var array = new SeaTypeIndex[BaseTileId.MaxLegalValue + 1];
         var span = array.AsSpan();
         span.Fill(SeaTypeIndex.None);
 

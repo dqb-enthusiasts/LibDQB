@@ -15,6 +15,11 @@ public readonly record struct BaseTileId : IComparable<BaseTileId>, IEquatable<B
     public const int MaxValue = 0x3FFF / 11;
 
     /// <summary>
+    /// The maximum <see cref="Value"/> for which <see cref="IsLegal"/> is true.
+    /// </summary>
+    public const int MaxLegalValue = 790;
+
+    /// <summary>
     /// Guaranteed to be in the inclusive range [0, <see cref="MaxValue"/>].
     /// </summary>
     public readonly int Value;
@@ -33,5 +38,10 @@ public readonly record struct BaseTileId : IComparable<BaseTileId>, IEquatable<B
     public int CompareTo(BaseTileId other) => Value.CompareTo(other.Value);
     public override string ToString() => Value.ToString();
 
-    public bool IsLegal => Value <= MinimapTile.MaxLegalBaseTileId;
+    /// <summary>
+    /// True indicates a legitimate base tile that DQB2 knows how to render.
+    /// False indicates an "illegal" base tile which DQB2 will never generate,
+    /// and if you edit it into the save file DQB2 will render nothing.
+    /// </summary>
+    public bool IsLegal => Value <= MaxLegalValue;
 }

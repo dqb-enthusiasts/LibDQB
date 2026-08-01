@@ -183,7 +183,7 @@ public class MinimapTests
         {
             var orig = MakeTile(i);
 
-            for (int tileId = 0; tileId <= MinimapTile.MaxLegalBaseTileId; tileId++)
+            for (int tileId = 0; tileId <= BaseTileId.MaxLegalValue; tileId++)
             {
                 var other = orig.ReplaceBaseTile(tileId);
                 Assert.AreEqual(tileId, other.BaseTileId);
