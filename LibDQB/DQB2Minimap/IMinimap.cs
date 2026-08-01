@@ -6,4 +6,4 @@ using System.Threading.Tasks;
 
 namespace LibDQB.DQB2Minimap;
 
-public interface IMinimap : IGrid<MinimapTile> { }
+public interface IMinimap : IReadOnlyMinimap, IGrid<MinimapTile> { }

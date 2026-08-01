@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LibDQB.DQB2Minimap;
 
-class Minimap : ReadOnlyMinimap, IMinimap
+sealed class Minimap : ReadOnlyMinimap, IMinimap
 {
     private readonly Memory<byte> data;
 

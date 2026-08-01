@@ -15,12 +15,11 @@ public readonly record struct MinimapTile
 
     /// <summary>
     /// Each tile value is 2 bytes in the CMNDAT file.
-    /// The normal ranges for tile values are:
-    /// * [0x0000..0x3FFF] for hidden tiles
-    /// * [0x8000..0xBFFF] for visible tiles
-    /// and the "quirky ranges" for tile values are:
-    /// * [0x4000..0x7FFF] for hidden tiles
-    /// * [0xC000..0xFFFF] for visible tiles
+    /// The ranges for tile values are:
+    /// * [0x0000..0x3FFF] for hidden tiles, normal
+    /// * [0x4000..0x7FFF] for hidden tiles, quirky
+    /// * [0x8000..0xBFFF] for visible tiles, normal
+    /// * [0xC000..0xFFFF] for visible tiles, quirky
     ///
     /// DQB2 does not use these quirky ranges in normal operation, but it does handle
     /// quirky values somewhat gracefully. For the most part, quirky values behave
