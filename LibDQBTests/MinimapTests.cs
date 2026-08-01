@@ -124,7 +124,7 @@ public class MinimapTests
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
-                var other = tile.ReplaceOverlay(overlay);
+                var other = tile.ReplaceOverlay(new OverlayId(overlay));
                 if (tile.BaseTileId.IsLegal)
                 {
                     Assert.AreEqual(tile.BaseTileId, other.BaseTileId);
@@ -185,7 +185,7 @@ public class MinimapTests
 
             for (int tileId = 0; tileId <= BaseTileId.MaxLegalValue; tileId++)
             {
-                var other = orig.ReplaceBaseTile(tileId);
+                var other = orig.ReplaceBaseTile(new BaseTileId(tileId));
                 Assert.AreEqual(tileId, other.BaseTileId);
                 Assert.IsFalse(other.IsQuirky); // never quirky
                 Assert.AreEqual(orig.OverlayId, other.OverlayId); // overlay unchanged
@@ -194,9 +194,10 @@ public class MinimapTests
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
+                var overlayId = new OverlayId(overlay);
                 if (orig.BaseTileId.IsLegal)
                 {
-                    var other = orig.ReplaceOverlay(overlay);
+                    var other = orig.ReplaceOverlay(overlayId);
                     Assert.AreEqual(overlay, other.OverlayId);
                     Assert.IsFalse(other.IsQuirky); // never quirky
                     Assert.AreEqual(orig.BaseTileId, other.BaseTileId); // base tile unchanged
@@ -207,7 +208,7 @@ public class MinimapTests
                     // Illegal base tiles never have overlays, so attempting
                     // to replace its overlay is a nonsensical request.
                     // I think the best thing we can do here is ignore the request.
-                    Assert.AreEqual(orig, orig.ReplaceOverlay(overlay));
+                    Assert.AreEqual(orig, orig.ReplaceOverlay(overlayId));
                 }
             }
 

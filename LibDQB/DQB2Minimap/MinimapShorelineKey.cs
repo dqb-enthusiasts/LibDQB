@@ -93,7 +93,9 @@ public readonly record struct MinimapShorelineKey
     /// the special seawater block (BlockId=420). This special block seems to be the
     /// only block that causes the game to render deep sea naturally.
     /// </summary>
-    public int DeepSeaBaseTileId
+    public BaseTileId DeepSeaBaseTileId => new(_DeepSeaBaseTileId);
+
+    private int _DeepSeaBaseTileId
     {
         get
         {
@@ -365,7 +367,9 @@ public readonly record struct MinimapShorelineKey
     /// <summary>
     /// This is used for areas covered with normal seawater, most commonly BlockId=349.
     /// </summary>
-    public int ShallowSeaBaseTileId
+    public BaseTileId ShallowSeaBaseTileId => new(_ShallowSeaBaseTileId);
+
+    private int _ShallowSeaBaseTileId
     {
         get
         {
@@ -640,7 +644,9 @@ public readonly record struct MinimapShorelineKey
     /// This could allow us to use a tilesheet that displays clear water differently than
     /// the shallow sea (whether in a tool or in a modded DQB2).
     /// </remarks>
-    public int ClearWaterBaseTileId
+    public BaseTileId ClearWaterBaseTileId => new(_ClearWaterBaseTileId);
+
+    private int _ClearWaterBaseTileId
     {
         get
         {

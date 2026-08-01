@@ -99,7 +99,7 @@ public readonly record struct MinimapTile
         return ReplaceBaseTile(key.ClearWaterBaseTileId);
     }
 
-    public MinimapTile ReplaceBaseTile(int baseTileId)
+    public MinimapTile ReplaceBaseTile(BaseTileId baseTileId)
     {
         int val = this.TileValue & ~0x7FFF;
         val += baseTileId * 11;
@@ -108,7 +108,7 @@ public readonly record struct MinimapTile
         return new MinimapTile { TileValue = val };
     }
 
-    public MinimapTile ReplaceOverlay(int overlayIndex)
+    public MinimapTile ReplaceOverlay(OverlayId overlayId)
     {
         if (!BaseTileId.IsLegal)
         {
@@ -116,7 +116,7 @@ public readonly record struct MinimapTile
         }
         int val = this.TileValue & ~0x7FFF;
         val += this.BaseTileId * 11;
-        val += overlayIndex % 11;
+        val += overlayId % 11;
         val += 1;
         return new MinimapTile { TileValue = val };
     }

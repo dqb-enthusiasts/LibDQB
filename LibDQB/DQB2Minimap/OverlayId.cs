@@ -34,7 +34,7 @@ public readonly record struct OverlayId : IComparable<OverlayId>
         }
     }
 
-    public static implicit operator int(OverlayId overlayId) => overlayId.Value;
+    public static implicit operator int(OverlayId a) => a.Value;
     public int CompareTo(OverlayId other) => this.Value.CompareTo(other.Value);
     public override string ToString() => Value.ToString();
 }
