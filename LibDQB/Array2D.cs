@@ -13,7 +13,7 @@ public sealed class Array2D<T> : IGrid<T>
 
     /// <summary>
     /// WARNING! This constructor is not null-safe, so it must remain private.
-    /// (When T a reference type the array will hold null, which might violate
+    /// (When T is a reference type the array will hold null, which might violate
     ///  the nullability of type T.)
     /// </summary>
     private Array2D(Rect bounds)
