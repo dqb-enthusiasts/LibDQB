@@ -1,4 +1,5 @@
 ﻿using LibDQB.B2.Records;
+using LibDQB.DQB2Minimap;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -25,7 +26,14 @@ public sealed class RawCommonData
         this.body = body;
     }
 
-    // S> Think we should move some of the next things to composition classes.
+    /// <summary>
+    /// The total length in bytes of the file (header length + compressed body length).
+    /// </summary>
+    public int CompressedFileSize
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(Header.Slice(0x10));
+        private set => BinaryPrimitives.WriteInt32LittleEndian(Header.Slice(0x10), value);
+    }
 
     /// <summary>
     /// See <see cref="LibDQB.B2.Records.SaveFileKey"/>
@@ -69,5 +77,38 @@ public sealed class RawCommonData
         // Unconfirmed if the game cares, but it won't matter for any reasonable value.
         get => DateTime.FromFileTimeUtc(BinaryPrimitives.ReadInt64LittleEndian(Header.Slice(0x2A40D)));
         set => BinaryPrimitives.WriteInt64LittleEndian(Header.Slice(0x2A40D), value.ToFileTimeUtc());
+    }
+
+    public IMinimap GetMinimap(IslandId islandId)
+    {
+        const int minimapStart = 2401803; // Island 0 starts at this address (in the body, no header)
+        int offset = ReadOnlyMinimap.IslandDataLength * islandId.Value;
+        var slice = body.Slice(minimapStart + offset, ReadOnlyMinimap.TileDataLength);
+        return new Minimap(slice);
+    }
+
+    public void Save(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+        Save(stream);
+    }
+
+    public void Save(Stream outstream)
+    {
+        using var compressedBody = new MemoryStream();
+        using var zlib = new ZLibStream(compressedBody, CompressionMode.Compress);
+        zlib.Write(body.Span);
+        zlib.Flush();
+        compressedBody.Flush();
+
+        // TODO - it's not clear if we should set this or not...
+        // But we do need to write the correct file size either way
+        CompressedFileSize = Convert.ToInt32(compressedBody.Length) + header.Length;
+        outstream.Write(header.Span);
+
+        compressedBody.Seek(0, SeekOrigin.Begin);
+        compressedBody.CopyTo(outstream);
+
+        outstream.Flush();
     }
 }
