@@ -7,57 +7,67 @@ using System.Threading.Tasks;
 namespace LibDQB.DQB2Minimap;
 
 /// <remarks>
-/// Based on https://github.com/Sapphire645/DQB2MinimapExporter
+/// The original research comes from https://github.com/Sapphire645/DQB2MinimapExporter
+///
+/// A CMNDAT file holds minimap data for all islands.
+/// Each minimap is 256x256 tiles, and each tile is represented
+/// by a 2-byte <see cref="TileValue"/>.
+/// The ranges for tile values are:
+/// * [0x0000..0x3FFF] for hidden tiles, normal
+/// * [0x4000..0x7FFF] for hidden tiles, quirky
+/// * [0x8000..0xBFFF] for visible tiles, normal
+/// * [0xC000..0xFFFF] for visible tiles, quirky
+/// These "quirky" ranges are not used by DQB2 in normal operation.
+/// More info at <see cref="IsQuirky"/>.
+///
+/// The <see cref="IsVisible"/> property is simply whether the value
+/// has the 0x8000 bit set or not.
+///
+/// The other two important properties are the <see cref="BaseTileId"/>
+/// and the <see cref="OverlayId"/> which are computed the same regardless
+/// of visibility and quirkiness.
+/// To ignore visibility and quirkiness, define MaskedValue to be (value & 0x3FFF).
+/// When MaskedValue is 0, it indicates "no data".
+/// Otherwise we can compute
+/// * BaseTileId = (MaskedValue - 1) / 11
+/// * OverlayId = (MaskedValue - 1) % 11
 /// </remarks>
 public readonly record struct MinimapTile
 {
     const int VisibleBit = 0x8000;
-
-    /// <summary>
-    /// Each tile value is 2 bytes in the CMNDAT file.
-    /// The ranges for tile values are:
-    /// * [0x0000..0x3FFF] for hidden tiles, normal
-    /// * [0x4000..0x7FFF] for hidden tiles, quirky
-    /// * [0x8000..0xBFFF] for visible tiles, normal
-    /// * [0xC000..0xFFFF] for visible tiles, quirky
-    ///
-    /// DQB2 does not use these quirky ranges in normal operation, but it does handle
-    /// quirky values somewhat gracefully. For the most part, quirky values behave
-    /// the same as normal values with these exceptions:
-    /// * Deep Sea is rendered as Shallow Sea or Clear Water
-    /// * Quirky overlays get rendered, see <see cref="QuirkyOverlay"/>.
-    /// </summary>
     const int QuirkyBit = 0x4000;
 
-    public const int MaxLegalTileId = 790;
-
-    public static readonly MinimapTile Empty = new MinimapTile { TileValue = -1 };
+    public static BaseTileId MaxLegalBaseTileId => new(790);
 
     public required int TileValue { get; init; }
 
-    public bool IsLegal => TileId <= MaxLegalTileId;
+    public BaseTileId BaseTileId => new(this);
 
-    public int TileId => (TileValue - 1 & 0x3FFF) / 11;
-    public int TileType
-    {
-        get
-        {
-            // Confirmed that DQB2 never shows overlays if the base tile is illegal.
-            if (TileId > MaxLegalTileId) return 0;
-            return (TileValue - 1 & 0x3FFF) % 11;
-        }
-    }
+    public OverlayId OverlayId => new(this);
+
+    /// <summary>
+    /// Indicates whether the tile has been revealed.
+    /// In normal play, tiles automatically reveal themselves when
+    /// the Builder comes near enough.
+    /// </summary>
     public bool IsVisible => (TileValue & VisibleBit) != 0;
 
+    /// <summary>
+    /// DQB2 does not use quirky tiles in normal operation, but it does handle
+    /// quirky tiles somewhat gracefully. For the most part, quirky tiles behave
+    /// the same as normal tiles with these exceptions:
+    /// * Deep Sea is rendered as Shallow Sea or Clear Water
+    /// * Quirky overlays get rendered, see <see cref="QuirkyOverlay"/>.
+    /// </summary>
     public bool IsQuirky => (TileValue & QuirkyBit) != 0;
 
     public SeaTypeIndex SeaTypeIndex
     {
         get
         {
-            if (TileId < seaTypeLookup.Count && TileId >= 0)
+            if (BaseTileId < seaTypeLookup.Count && BaseTileId >= 0)
             {
-                return seaTypeLookup[TileId];
+                return seaTypeLookup[BaseTileId];
             }
             return SeaTypeIndex.None;
         }
@@ -95,19 +105,19 @@ public readonly record struct MinimapTile
     {
         int val = this.TileValue & ~0x7FFF;
         val += baseTileId * 11;
-        val += TileType;
+        val += OverlayId;
         val += 1;
         return new MinimapTile { TileValue = val };
     }
 
     public MinimapTile ReplaceOverlay(int overlayIndex)
     {
-        if (!IsLegal)
+        if (!BaseTileId.IsLegal)
         {
             return this;
         }
         int val = this.TileValue & ~0x7FFF;
-        val += this.TileId * 11;
+        val += this.BaseTileId * 11;
         val += overlayIndex % 11;
         val += 1;
         return new MinimapTile { TileValue = val };
@@ -119,7 +129,7 @@ public readonly record struct MinimapTile
 
         // The other "Replace***" methods guarantee the result is not quirky.
         // For visibility, we don't really have to clear the quirky bit but
-        // doing so is more consistent with the other Replace*** methods.
+        // doing so is more consistent with those other methods.
         val &= ~QuirkyBit;
 
         if (isVisible)
@@ -142,7 +152,7 @@ public readonly record struct MinimapTile
     /// For most tiles, it returns null indicating there is no quirky overlay.
     /// </summary>
     /// <remarks>
-    /// See also <see cref="QuirkyBit"/>.
+    /// See also <see cref="IsQuirky"/>.
     /// </remarks>
     public int? QuirkyOverlay
     {
@@ -153,6 +163,7 @@ public readonly record struct MinimapTile
 
             return (TileValue & 0x7FFF) switch
             {
+                // Base + 11*BaseTileId => OverlayId
                 Base + 11 * 8 => 8,
                 Base + 11 * 9 => 10,
                 Base + 11 * 10 => 9,
@@ -167,7 +178,7 @@ public readonly record struct MinimapTile
 
     private static IReadOnlyList<SeaTypeIndex> BuildSeaTypeLookup()
     {
-        var array = new SeaTypeIndex[MaxLegalTileId + 1];
+        var array = new SeaTypeIndex[MaxLegalBaseTileId + 1];
         var span = array.AsSpan();
         span.Fill(SeaTypeIndex.None);
 

@@ -20,7 +20,7 @@ public class MinimapTests
         Assert.HasCount(256, AllKeys);
         Assert.AreEqual(256, AllKeys.Distinct().Count());
 
-        // Every key should have the same TileTypeAdder as its canonical form.
+        // Every key should have the same base tile ID as its canonical form.
         foreach (var key in AllKeys)
         {
             var canon = key.MakeCanonical();
@@ -83,7 +83,7 @@ public class MinimapTests
             if (includeTile(tile))
             {
                 sb.Append("0x").Append(val.ToString("x8"));
-                sb.Append($",{val},{tile.TileId},{tile.TileType}\n");
+                sb.Append($",{val},{tile.BaseTileId},{tile.OverlayId}\n");
             }
         }
 
@@ -106,7 +106,7 @@ public class MinimapTests
     [TestMethod]
     public void legal_minimap_tiles_snapshot_test()
     {
-        do_tile_snapshot_test("legal-minimap-tiles.expected.csv", tile => tile.IsLegal);
+        do_tile_snapshot_test("legal-minimap-tiles.expected.csv", tile => tile.BaseTileId.IsLegal);
     }
 
     [TestMethod]
@@ -120,21 +120,21 @@ public class MinimapTests
         {
             var tile = MakeTile(val);
             Assert.IsLessThan((int)SeaTypeIndex.END, (int)tile.SeaTypeIndex);
-            Assert.IsTrue(tile.TileType >= 0 && tile.TileType < 11);
+            Assert.IsTrue(tile.OverlayId >= 0 && tile.OverlayId < 11);
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
                 var other = tile.ReplaceOverlay(overlay);
-                if (tile.IsLegal)
+                if (tile.BaseTileId.IsLegal)
                 {
-                    Assert.AreEqual(tile.TileId, other.TileId);
-                    Assert.AreEqual(overlay, other.TileType);
+                    Assert.AreEqual(tile.BaseTileId, other.BaseTileId);
+                    Assert.AreEqual(overlay, other.OverlayId);
                 }
                 else
                 {
                     // Overlay is always 0 when base tile is illegal
-                    Assert.AreEqual(tile.TileId, other.TileId);
-                    Assert.AreEqual(0, other.TileType);
+                    Assert.AreEqual(tile.BaseTileId, other.BaseTileId);
+                    Assert.AreEqual(0, other.OverlayId);
                 }
             }
         }
@@ -183,23 +183,23 @@ public class MinimapTests
         {
             var orig = MakeTile(i);
 
-            for (int tileId = 0; tileId <= MinimapTile.MaxLegalTileId; tileId++)
+            for (int tileId = 0; tileId <= MinimapTile.MaxLegalBaseTileId; tileId++)
             {
                 var other = orig.ReplaceBaseTile(tileId);
-                Assert.AreEqual(tileId, other.TileId);
+                Assert.AreEqual(tileId, other.BaseTileId);
                 Assert.IsFalse(other.IsQuirky); // never quirky
-                Assert.AreEqual(orig.TileType, other.TileType); // overlay unchanged
+                Assert.AreEqual(orig.OverlayId, other.OverlayId); // overlay unchanged
                 Assert.AreEqual(orig.IsVisible, other.IsVisible); // visibility unchanged
             }
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
-                if (orig.IsLegal)
+                if (orig.BaseTileId.IsLegal)
                 {
                     var other = orig.ReplaceOverlay(overlay);
-                    Assert.AreEqual(overlay, other.TileType);
+                    Assert.AreEqual(overlay, other.OverlayId);
                     Assert.IsFalse(other.IsQuirky); // never quirky
-                    Assert.AreEqual(orig.TileId, other.TileId); // base tile unchanged
+                    Assert.AreEqual(orig.BaseTileId, other.BaseTileId); // base tile unchanged
                     Assert.AreEqual(orig.IsVisible, other.IsVisible); // visibility unchanged
                 }
                 else
@@ -216,8 +216,8 @@ public class MinimapTests
                 var other = orig.ReplaceVisibility(visible);
                 Assert.AreEqual(visible, other.IsVisible);
                 Assert.IsFalse(other.IsQuirky); // never quirky
-                Assert.AreEqual(orig.TileId, other.TileId); // base tile unchanged
-                Assert.AreEqual(orig.TileType, other.TileType); // overlay unchanged
+                Assert.AreEqual(orig.BaseTileId, other.BaseTileId); // base tile unchanged
+                Assert.AreEqual(orig.OverlayId, other.OverlayId); // overlay unchanged
             }
         }
     }
