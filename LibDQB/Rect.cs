@@ -43,6 +43,14 @@ public sealed record Rect(XZ Start, XZ End)
         return zIndex * width + xIndex;
     }
 
+    public bool Covers(Rect other)
+    {
+        return this.Start.X <= other.Start.X
+            && this.Start.Z <= other.Start.Z
+            && this.End.X >= other.End.X
+            && this.End.Z >= other.End.Z;
+    }
+
     public IEnumerable<XZ> Enumerate()
     {
         for (int z = Start.Z; z < End.Z; z++)
