@@ -83,7 +83,7 @@ public class MinimapTests
             if (includeTile(tile))
             {
                 sb.Append("0x").Append(val.ToString("x8"));
-                sb.Append($",{val},{tile.BaseTileId},{tile.OverlayId}\n");
+                sb.Append($",{val},{tile.BaseTileId},{tile.QuirkyOverlay ?? tile.OverlayId}\n");
             }
         }
 
