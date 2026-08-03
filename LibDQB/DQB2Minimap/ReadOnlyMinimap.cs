@@ -47,10 +47,6 @@ class ReadOnlyMinimap : IReadOnlyMinimap
         int index = GetIndex(xz);
         byte byte1 = data.Span[index];
         byte byte2 = data.Span[index + 1];
-        var tile = new MinimapTile
-        {
-            TileValue = byte1 | (byte2 << 8)
-        };
-        return tile;
+        return MinimapTile.FromRawValue(byte1 | (byte2 << 8));
     }
 }

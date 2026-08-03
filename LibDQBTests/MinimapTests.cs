@@ -65,7 +65,7 @@ public class MinimapTests
         }
     }
 
-    private static MinimapTile MakeTile(int value) => new MinimapTile { TileValue = value };
+    private static MinimapTile MakeTile(int value) => MinimapTile.FromRawValue(value);
 
     private void do_tile_snapshot_test(string filename, Func<MinimapTile, bool> includeTile)
     {
@@ -83,7 +83,7 @@ public class MinimapTests
             if (includeTile(tile))
             {
                 sb.Append("0x").Append(val.ToString("x8"));
-                sb.Append($",{val},{tile.BaseTileId},{tile.QuirkyOverlay ?? tile.OverlayId}\n");
+                sb.Append($",{val},{tile.BaseTileId},{tile.ApparentOverlayId}\n");
             }
         }
 
@@ -120,7 +120,8 @@ public class MinimapTests
         {
             var tile = MakeTile(val);
             Assert.IsLessThan((int)SeaTypeIndex.END, (int)tile.SeaTypeIndex);
-            Assert.IsTrue(tile.OverlayId >= 0 && tile.OverlayId < 11);
+            Assert.IsTrue(tile.FormulaicOverlayId >= 0 && tile.FormulaicOverlayId < 11);
+            Assert.IsTrue(tile.ApparentOverlayId >= 0 && tile.ApparentOverlayId < 11);
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
@@ -128,13 +129,14 @@ public class MinimapTests
                 if (tile.BaseTileId.IsLegal)
                 {
                     Assert.AreEqual(tile.BaseTileId, other.BaseTileId);
-                    Assert.AreEqual(overlay, other.OverlayId);
+                    Assert.AreEqual(overlay, other.FormulaicOverlayId);
+                    Assert.AreEqual(overlay, other.ApparentOverlayId);
                 }
                 else
                 {
                     // Overlay is always 0 when base tile is illegal
                     Assert.AreEqual(tile.BaseTileId, other.BaseTileId);
-                    Assert.AreEqual(0, other.OverlayId);
+                    Assert.AreEqual(0, other.FormulaicOverlayId);
                 }
             }
         }
@@ -145,12 +147,15 @@ public class MinimapTests
     {
         var quirkyOverlays = Enumerable.Range(0x8000, 0x8000)
             .Select(MakeTile)
-            .Where(tile => tile.QuirkyOverlay.HasValue)
+            .Where(tile => tile.ApparentOverlayId != tile.FormulaicOverlayId)
             .ToList();
 
         MinimapTile Quirky(int baseTileId)
         {
-            return new MinimapTile { TileValue = 0xC000 + 1 + baseTileId * 11 };
+            var tile = MinimapTile.FromRawValue(0xC000 + 1 + baseTileId * 11);
+            Assert.IsTrue(tile.IsQuirky);
+            Assert.AreEqual(0, tile.FormulaicOverlayId);
+            return tile;
         }
 
         // Sapphire found these 5 in original research.
@@ -159,19 +164,19 @@ public class MinimapTests
         Assert.HasCount(5, quirkyOverlays);
         int i = 0;
         Assert.AreEqual(Quirky(8), quirkyOverlays[i]);
-        Assert.AreEqual(8, quirkyOverlays[i].QuirkyOverlay.GetValueOrDefault());
+        Assert.AreEqual(8, quirkyOverlays[i].ApparentOverlayId);
         i++;
         Assert.AreEqual(Quirky(9), quirkyOverlays[i]);
-        Assert.AreEqual(10, quirkyOverlays[i].QuirkyOverlay.GetValueOrDefault());
+        Assert.AreEqual(10, quirkyOverlays[i].ApparentOverlayId);
         i++;
         Assert.AreEqual(Quirky(10), quirkyOverlays[i]);
-        Assert.AreEqual(9, quirkyOverlays[i].QuirkyOverlay.GetValueOrDefault());
+        Assert.AreEqual(9, quirkyOverlays[i].ApparentOverlayId);
         i++;
         Assert.AreEqual(Quirky(11), quirkyOverlays[i]);
-        Assert.AreEqual(7, quirkyOverlays[i].QuirkyOverlay.GetValueOrDefault());
+        Assert.AreEqual(7, quirkyOverlays[i].ApparentOverlayId);
         i++;
         Assert.AreEqual(Quirky(18), quirkyOverlays[i]);
-        Assert.AreEqual(8, quirkyOverlays[i].QuirkyOverlay.GetValueOrDefault());
+        Assert.AreEqual(8, quirkyOverlays[i].ApparentOverlayId);
         i++;
         Assert.AreEqual(quirkyOverlays.Count, i);
     }
@@ -185,40 +190,54 @@ public class MinimapTests
 
             for (int tileId = 0; tileId <= BaseTileId.MaxLegalValue; tileId++)
             {
+                // Normalizing down to non-quirky helps us ensure that Apparent Overlay is unchanged.
+                // (Note that Formulaic Overlay can change here.)
                 var other = orig.ReplaceBaseTile(new BaseTileId(tileId));
+                // == changed ==
                 Assert.AreEqual(tileId, other.BaseTileId);
-                Assert.IsFalse(other.IsQuirky); // never quirky
-                Assert.AreEqual(orig.OverlayId, other.OverlayId); // overlay unchanged
-                Assert.AreEqual(orig.IsVisible, other.IsVisible); // visibility unchanged
+                Assert.IsFalse(other.IsQuirky);
+                // == unchanged ==
+                Assert.AreEqual(orig.ApparentOverlayId, other.ApparentOverlayId);
+                Assert.AreEqual(orig.IsVisible, other.IsVisible);
             }
 
             for (int overlay = 0; overlay < 11; overlay++)
             {
-                var overlayId = new OverlayId(overlay);
                 if (orig.BaseTileId.IsLegal)
                 {
-                    var other = orig.ReplaceOverlay(overlayId);
-                    Assert.AreEqual(overlay, other.OverlayId);
-                    Assert.IsFalse(other.IsQuirky); // never quirky
-                    Assert.AreEqual(orig.BaseTileId, other.BaseTileId); // base tile unchanged
-                    Assert.AreEqual(orig.IsVisible, other.IsVisible); // visibility unchanged
+                    // Normalizing down to non-quirky helps us ensure that the Apparent Overlay is
+                    // changed to the requested value. This implies that Formulaic Overlay will
+                    // match the requested value also.
+                    var other = orig.ReplaceOverlay(new OverlayId(overlay));
+                    // == changed ==
+                    Assert.IsFalse(other.IsQuirky);
+                    Assert.AreEqual(overlay, other.ApparentOverlayId);
+                    Assert.AreEqual(overlay, other.FormulaicOverlayId);
+                    // == unchanged ==
+                    Assert.AreEqual(orig.IsVisible, other.IsVisible);
+                    Assert.AreEqual(orig.BaseTileId, other.BaseTileId);
                 }
                 else
                 {
-                    // Illegal base tiles never have overlays, so attempting
+                    // Illegal base tiles never have (apparent) overlays, so attempting
                     // to replace its overlay is a nonsensical request.
                     // I think the best thing we can do here is ignore the request.
-                    Assert.AreEqual(orig, orig.ReplaceOverlay(overlayId));
+                    Assert.AreEqual(orig, orig.ReplaceOverlay(new OverlayId(overlay)));
                 }
             }
 
             foreach (var visible in new bool[] { true, false })
             {
+                // It makes sense to preserve quirkiness, otherwise we might have to
+                // do extra work to keep the Apparent Overlay unchanged.
                 var other = orig.ReplaceVisibility(visible);
+                // == changed ==
                 Assert.AreEqual(visible, other.IsVisible);
-                Assert.IsFalse(other.IsQuirky); // never quirky
-                Assert.AreEqual(orig.BaseTileId, other.BaseTileId); // base tile unchanged
-                Assert.AreEqual(orig.OverlayId, other.OverlayId); // overlay unchanged
+                // == unchanged ==
+                Assert.AreEqual(orig.IsQuirky, other.IsQuirky);
+                Assert.AreEqual(orig.BaseTileId, other.BaseTileId);
+                Assert.AreEqual(orig.FormulaicOverlayId, other.FormulaicOverlayId);
+                Assert.AreEqual(orig.ApparentOverlayId, other.ApparentOverlayId);
             }
         }
     }

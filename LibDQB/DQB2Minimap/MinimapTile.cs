@@ -24,7 +24,7 @@ namespace LibDQB.DQB2Minimap;
 /// has the 0x8000 bit set or not.
 ///
 /// The other two important properties are the <see cref="BaseTileId"/>
-/// and the <see cref="OverlayId"/> which are computed the same regardless
+/// and the <see cref="FormulaicOverlayId"/> which are computed the same regardless
 /// of visibility and quirkiness.
 /// To ignore visibility and quirkiness, define MaskedValue to be (value & 0x3FFF).
 /// When MaskedValue is 0, it indicates "no data".
@@ -37,11 +37,16 @@ public readonly record struct MinimapTile
     const int VisibleBit = 0x8000;
     const int QuirkyBit = 0x4000;
 
-    public required int TileValue { get; init; }
+    public int TileValue { get; }
+
+    private MinimapTile(int value) { this.TileValue = value; }
+
+    public static MinimapTile FromRawValue(int value) => new(value);
 
     public BaseTileId BaseTileId => new(this);
 
-    public OverlayId OverlayId => new(this);
+    public OverlayId FormulaicOverlayId => new(this);
+    public OverlayId ApparentOverlayId => QuirkyOverlay ?? FormulaicOverlayId;
 
     /// <summary>
     /// Indicates whether the tile has been revealed.
@@ -103,9 +108,9 @@ public readonly record struct MinimapTile
     {
         int val = this.TileValue & ~0x7FFF;
         val += baseTileId * 11;
-        val += OverlayId;
+        val += ApparentOverlayId;
         val += 1;
-        return new MinimapTile { TileValue = val };
+        return new(val);
     }
 
     public MinimapTile ReplaceOverlay(OverlayId overlayId)
@@ -118,18 +123,12 @@ public readonly record struct MinimapTile
         val += this.BaseTileId * 11;
         val += overlayId % 11;
         val += 1;
-        return new MinimapTile { TileValue = val };
+        return new(val);
     }
 
     public MinimapTile ReplaceVisibility(bool isVisible)
     {
         int val = this.TileValue;
-
-        // The other "Replace***" methods guarantee the result is not quirky.
-        // For visibility, we don't really have to clear the quirky bit but
-        // doing so is more consistent with those other methods.
-        val &= ~QuirkyBit;
-
         if (isVisible)
         {
             val |= VisibleBit;
@@ -138,7 +137,7 @@ public readonly record struct MinimapTile
         {
             val &= ~VisibleBit;
         }
-        return new MinimapTile { TileValue = val };
+        return new MinimapTile(val);
     }
 
     /// <summary>
@@ -152,7 +151,7 @@ public readonly record struct MinimapTile
     /// <remarks>
     /// See also <see cref="IsQuirky"/>.
     /// </remarks>
-    public OverlayId? QuirkyOverlay
+    private OverlayId? QuirkyOverlay
     {
         get
         {
