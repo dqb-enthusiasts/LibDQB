@@ -126,6 +126,18 @@ public readonly record struct MinimapTile
         return new(val);
     }
 
+    public MinimapTile RemoveQuirkiness()
+    {
+        // Removing quirkiness is easier than adding it.
+        // (And in fact, adding quirkiness is a "dangerous" request because it
+        //  could change your Apparent Overlay from nothing to something)
+        int val = this.TileValue & ~0x7FFF;
+        val += BaseTileId * 11;
+        val += ApparentOverlayId;
+        val += 1;
+        return new(val);
+    }
+
     public MinimapTile ReplaceVisibility(bool isVisible)
     {
         int val = this.TileValue;

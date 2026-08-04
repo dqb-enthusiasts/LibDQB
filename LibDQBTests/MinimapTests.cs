@@ -239,6 +239,16 @@ public class MinimapTests
                 Assert.AreEqual(orig.FormulaicOverlayId, other.FormulaicOverlayId);
                 Assert.AreEqual(orig.ApparentOverlayId, other.ApparentOverlayId);
             }
+
+            {
+                var other = orig.RemoveQuirkiness();
+                // == changed ==
+                Assert.IsFalse(other.IsQuirky);
+                // == unchanged ==
+                Assert.AreEqual(orig.IsVisible, other.IsVisible);
+                Assert.AreEqual(orig.BaseTileId, other.BaseTileId);
+                Assert.AreEqual(orig.ApparentOverlayId, other.ApparentOverlayId);
+            }
         }
     }
 
