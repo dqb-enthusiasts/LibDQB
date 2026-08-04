@@ -1,4 +1,5 @@
-﻿using LibDQB.DQB2Minimap;
+﻿using LibDQB;
+using LibDQB.DQB2Minimap;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -119,7 +120,6 @@ public class MinimapTests
         for (int val = from; val <= to; val++)
         {
             var tile = MakeTile(val);
-            Assert.IsLessThan((int)SeaTypeIndex.END, (int)tile.SeaTypeIndex);
             Assert.IsTrue(tile.FormulaicOverlayId >= 0 && tile.FormulaicOverlayId < 11);
             Assert.IsTrue(tile.ApparentOverlayId >= 0 && tile.ApparentOverlayId < 11);
 
@@ -250,6 +250,50 @@ public class MinimapTests
                 Assert.AreEqual(orig.ApparentOverlayId, other.ApparentOverlayId);
             }
         }
+    }
+
+    [TestMethod]
+    public void basic_shoreline_test()
+    {
+        var grid = new Array2D<MinimapTile>(new Rect(XZ.Zero, new XZ(10, 10)), MinimapTile.FromRawValue(0x8001));
+        var landTile = MinimapTile.FromRawValue(0x8001).ReplaceBaseTile(new BaseTileId(3));
+
+        // Set it up so that 3,0 has land to the S.
+        // NW, N, and NE are out-of-bounds and thus treated as sea.
+        // All other neighbors are true sea.
+        grid.Set(new XZ(3, 1), landTile);
+        var key = MinimapShorelineKey.Compute(new XZ(3, 0), grid);
+        Assert.AreEqual(28 + 15 * 0, key.DeepSeaBaseTileId);
+        Assert.AreEqual(28 + 15 * 1, key.ShallowSeaBaseTileId);
+        Assert.AreEqual(28 + 15 * 2, key.ClearWaterBaseTileId);
+    }
+
+    [TestMethod]
+    public void illegal_tile_shoreline_regression()
+    {
+        // Illegal tiles should not count as land when computing shorelines,
+        void Test(MinimapTile seaTile)
+        {
+            Assert.IsFalse(seaTile.BaseTileId.IsLegal);
+            Assert.AreEqual(SeaType.IllegalTile, seaTile.SeaType);
+
+            var grid = new Array2D<MinimapTile>(new Rect(XZ.Zero, new XZ(3, 3)), seaTile);
+            var landTile = MinimapTile.FromRawValue(0x8001).ReplaceBaseTile(new BaseTileId(3));
+            XZ landXZ = new XZ(1, 1);
+            grid.Set(landXZ, landTile);
+
+            var key = MinimapShorelineKey.Compute(landXZ, grid);
+            Assert.AreEqual(0, key.Value);
+            Assert.AreEqual(0, key.DeepSeaBaseTileId);
+            Assert.AreEqual(1, key.ShallowSeaBaseTileId);
+            Assert.AreEqual(2, key.ClearWaterBaseTileId);
+        }
+
+        Test(MinimapTile.FromRawValue(0));
+        Test(MinimapTile.FromRawValue(0x4000));
+        Test(MinimapTile.FromRawValue(0x8000));
+        Test(MinimapTile.FromRawValue(0xC000));
+        Test(MinimapTile.FromRawValue(0xC000 - 67)); // a "random" illegal tile
     }
 
     private static DirectoryInfo FindProjectRoot()

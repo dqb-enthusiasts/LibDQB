@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace LibDQB.DQB2Minimap;
 
-public enum SeaTypeIndex
+public enum SeaType
 {
     None = 0,
     DeepSea = 1,
     ShallowSea = 2,
     ClearWater = 3,
-    END = 4,
+    Land = 4,
+    IllegalTile = 5,
 }

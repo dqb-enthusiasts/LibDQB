@@ -64,7 +64,7 @@ public readonly record struct MinimapTile
     /// </summary>
     public bool IsQuirky => (TileValue & QuirkyBit) != 0;
 
-    public SeaTypeIndex SeaTypeIndex
+    public SeaType SeaType
     {
         get
         {
@@ -72,19 +72,30 @@ public readonly record struct MinimapTile
             {
                 return seaTypeLookup[BaseTileId];
             }
-            return SeaTypeIndex.None;
+            return SeaType.IllegalTile;
         }
     }
 
-    public bool CanHaveShoreline() => SeaTypeIndex != SeaTypeIndex.None;
+    public bool CanHaveShoreline()
+    {
+        switch (SeaType)
+        {
+            case SeaType.DeepSea:
+            case SeaType.ShallowSea:
+            case SeaType.ClearWater:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public MinimapTile FixupShoreline(MinimapShorelineKey key)
     {
-        switch (SeaTypeIndex)
+        switch (SeaType)
         {
-            case SeaTypeIndex.DeepSea: return ReplaceWithDeepSea(key);
-            case SeaTypeIndex.ShallowSea: return ReplaceWithShallowSea(key);
-            case SeaTypeIndex.ClearWater: return ReplaceWithClearWater(key);
+            case SeaType.DeepSea: return ReplaceWithDeepSea(key);
+            case SeaType.ShallowSea: return ReplaceWithShallowSea(key);
+            case SeaType.ClearWater: return ReplaceWithClearWater(key);
             default: return this;
         }
     }
@@ -183,43 +194,43 @@ public readonly record struct MinimapTile
         }
     }
 
-    private static readonly IReadOnlyList<SeaTypeIndex> seaTypeLookup = BuildSeaTypeLookup();
+    private static readonly IReadOnlyList<SeaType> seaTypeLookup = BuildSeaTypeLookup();
 
-    private static IReadOnlyList<SeaTypeIndex> BuildSeaTypeLookup()
+    private static IReadOnlyList<SeaType> BuildSeaTypeLookup()
     {
-        var array = new SeaTypeIndex[BaseTileId.MaxLegalValue + 1];
+        var array = new SeaType[BaseTileId.MaxLegalValue + 1];
         var span = array.AsSpan();
-        span.Fill(SeaTypeIndex.None);
+        span.Fill(SeaType.Land);
 
         // primary IDs - no edges and no corners
-        array[0] = SeaTypeIndex.DeepSea;
-        array[1] = SeaTypeIndex.ShallowSea;
-        array[2] = SeaTypeIndex.ClearWater;
+        array[0] = SeaType.DeepSea;
+        array[1] = SeaType.ShallowSea;
+        array[2] = SeaType.ClearWater;
 
         int i = 0x1A;
 
         // bank 1 - the 15 edge possiblities (no corners)
-        span.Slice(i, 15).Fill(SeaTypeIndex.DeepSea);
+        span.Slice(i, 15).Fill(SeaType.DeepSea);
         i += 15;
-        span.Slice(i, 15).Fill(SeaTypeIndex.ShallowSea);
+        span.Slice(i, 15).Fill(SeaType.ShallowSea);
         i += 15;
-        span.Slice(i, 15).Fill(SeaTypeIndex.ClearWater);
+        span.Slice(i, 15).Fill(SeaType.ClearWater);
         i += 15;
 
         // bank 2 - the 15 corner possibilities (no edges)
-        span.Slice(i, 15).Fill(SeaTypeIndex.DeepSea);
+        span.Slice(i, 15).Fill(SeaType.DeepSea);
         i += 15;
-        span.Slice(i, 15).Fill(SeaTypeIndex.ShallowSea);
+        span.Slice(i, 15).Fill(SeaType.ShallowSea);
         i += 15;
-        span.Slice(i, 15).Fill(SeaTypeIndex.ClearWater);
+        span.Slice(i, 15).Fill(SeaType.ClearWater);
         i += 15;
 
         // bank 3 - the 225 edge+corner possibilities (the cartesian product of bank 1 and bank 2)
-        span.Slice(i, 225).Fill(SeaTypeIndex.DeepSea);
+        span.Slice(i, 225).Fill(SeaType.DeepSea);
         i += 225;
-        span.Slice(i, 225).Fill(SeaTypeIndex.ShallowSea);
+        span.Slice(i, 225).Fill(SeaType.ShallowSea);
         i += 225;
-        span.Slice(i, 225).Fill(SeaTypeIndex.ClearWater);
+        span.Slice(i, 225).Fill(SeaType.ClearWater);
         i += 225;
 
         return array;

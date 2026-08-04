@@ -44,7 +44,7 @@ public readonly record struct MinimapShorelineKey
         {
             var neighbor = xz.Add(dx, dz);
             return grid.Bounds.Contains(neighbor)
-                && !grid.Get(neighbor).CanHaveShoreline();
+                && grid.Get(neighbor).SeaType == SeaType.Land;
         }
 
         byte key = 0;
