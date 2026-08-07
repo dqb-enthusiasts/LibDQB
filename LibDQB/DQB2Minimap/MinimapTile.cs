@@ -43,10 +43,35 @@ public readonly record struct MinimapTile
 
     public static MinimapTile FromRawValue(int value) => new(value);
 
+    /// <summary>
+    /// Defines which base tile will be rendered.
+    /// For example: Earth, Grassy Earth, Sand, and Light Dolomite are all
+    /// mapped to different base tiles.
+    /// See also <see cref="ApparentOverlayId"/>.
+    /// </summary>
     public BaseTileId BaseTileId => new(this);
 
-    public OverlayId FormulaicOverlayId => new(this);
+    /// <summary>
+    /// Defines which overlay will be rendered.
+    /// There are exactly 11 possible values:
+    /// <list type="bullet">
+    /// <item><term>0</term><description>No overlay</description></item>
+    /// <item><term>1</term><description>Normal trees</description></item>
+    /// <item><term>2</term><description>Tower</description></item>
+    /// <item><term>3</term><description>Tropical Trees</description></item>
+    /// <item><term>4</term><description>unused and unsupported</description></item>
+    /// <item><term>5</term><description>unused and unsupported</description></item>
+    /// <item><term>6</term><description>Door (used for rooms)</description></item>
+    /// <item><term>7</term><description>Brown Foothills</description></item>
+    /// <item><term>8</term><description>Gray Mountains</description></item>
+    /// <item><term>9</term><description>Red-Brown Mountains</description></item>
+    /// <item><term>10</term><description>Gray Foothills</description></item>
+    /// </list>
+    /// See also <see cref="BaseTileId"/>.
+    /// </summary>
     public OverlayId ApparentOverlayId => QuirkyOverlay ?? FormulaicOverlayId;
+
+    public OverlayId FormulaicOverlayId => new(this);
 
     /// <summary>
     /// Indicates whether the tile has been revealed.

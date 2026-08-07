@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace LibDQB.DQB2Minimap;
 
+/// <summary>
+/// See <see cref="MinimapTile.BaseTileId"/>.
+/// </summary>
 public readonly record struct BaseTileId : IComparable<BaseTileId>, IEquatable<BaseTileId>
 {
     /// <summary>

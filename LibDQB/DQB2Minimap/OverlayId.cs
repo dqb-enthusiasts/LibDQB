@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace LibDQB.DQB2Minimap;
 
+/// <summary>
+/// See <see cref="MinimapTile.ApparentOverlayId"/>
+/// and <see cref="MinimapTile.FormulaicOverlayId"/>.
+/// </summary>
 public readonly record struct OverlayId : IComparable<OverlayId>
 {
     /// <summary>
