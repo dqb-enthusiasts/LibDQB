@@ -43,6 +43,9 @@ public class RawCmndatTests
         var file = FindTestFile("game-saves", "01", "CMNDAT.BIN");
         var cmndat = await FileFactory.LoadCommonDataAsync(file);
 
+        // File size on disk should match file size in header:
+        Assert.AreEqual(file.Length, cmndat.CompressedFileSize);
+
         // Buildertopia Gamma (16), not sailing
         Assert.AreEqual(16, cmndat.ToIslandId.Value);
         Assert.AreEqual(16, cmndat.FromIslandId.Value);

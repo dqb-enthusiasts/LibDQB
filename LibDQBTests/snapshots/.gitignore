@@ -1,0 +1,4 @@
+# By convention, snapshots will be named foo.expected.whatever and if a snapshot
+# test fails, it will write to foo.actual.whatever for convenient diffing.
+# These actual files don't belong in source control.
+*.actual.*
